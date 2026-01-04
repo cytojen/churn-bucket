@@ -1,0 +1,15 @@
+[Unit]
+Description=Churn Prediction API Service
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/app/backend
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+ExecStart=/usr/bin/python3 api.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
