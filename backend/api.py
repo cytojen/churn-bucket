@@ -3,7 +3,7 @@ FastAPI service for automated churn prediction pipeline.
 Provides REST API endpoints to trigger predictions and check status.
 """
 
-from fastapi import FastAPI, BackgroundTasks, HTTPException
+from fastapi import FastAPI, BackgroundTasks, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict, List
@@ -11,7 +11,8 @@ import uvicorn
 from datetime import datetime
 import asyncio
 import os
-from predict_churn import run_prediction_pipeline
+import io
+from predict_churn import run_prediction_pipeline, load_model, feature_engineering, classify_status
 from config import (
     get_cors_origins, MODEL_PATH, API_HOST, API_PORT, API_RELOAD,
     ENABLE_AUTO_PREDICTIONS, AUTO_PREDICTION_INTERVAL, SUPABASE_URL
@@ -173,6 +174,82 @@ async def get_last_results():
         )
     
     return PredictionResult(**prediction_status["last_result"])
+
+
+@app.post("/predict/batch")
+async def batch_score_customers(file: UploadFile = File(...)):
+    """
+    Score multiple customers from uploaded CSV file.
+    Returns churn risk scores and classifications for each customer.
+    """
+    try:
+        # Validate file type
+        if not file.filename.endswith('.csv'):
+            raise HTTPException(
+                status_code=400,
+                detail="Only CSV files are supported"
+            )
+        
+        # Read CSV file
+        contents = await file.read()
+        df = pd.read_csv(io.StringIO(contents.decode('utf-8')))
+        
+        print(f"Received CSV with {len(df)} rows")
+        print(f"Columns: {list(df.columns)}")
+        
+        # Validate required columns
+        required_columns = ['customer_id', 'customer_name']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Missing required columns: {', '.join(missing_columns)}"
+            )
+        
+        # Load model
+        model = load_model()
+        
+        # Engineer features
+        df_features = feature_engineering(df)
+        
+        # Make predictions
+        X = df_features.drop(['customer_id'], axis=1, errors='ignore')
+        
+        # Get risk scores and predictions
+        risk_scores = model.predict_proba(X)[:, 1]
+        predictions = model.predict(X)
+        
+        # Classify status
+        status_classifications = [classify_status(score) for score in risk_scores]
+        
+        # Prepare results
+        results = []
+        for i in range(len(df)):
+            results.append({
+                "customer_id": str(df.iloc[i]['customer_id']),
+                "customer_name": str(df.iloc[i]['customer_name']),
+                "churn_risk_score": float(risk_scores[i]),
+                "status_classification": status_classifications[i],
+                "prediction": bool(predictions[i])
+            })
+        
+        return {
+            "message": "Batch scoring completed successfully",
+            "total_customers": len(results),
+            "results": results
+        }
+        
+    except pd.errors.ParserError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid CSV file format: {str(e)}"
+        )
+    except Exception as e:
+        print(f"Error in batch scoring: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error processing file: {str(e)}"
+        )
 
 
 @app.get("/health")
