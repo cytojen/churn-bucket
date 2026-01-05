@@ -8,6 +8,7 @@ export default function AlertCenterPage() {
   const [alertsList, setAlertsList] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<"All" | "Critical" | "Warning">("All");
 
   useEffect(() => {
     loadAlerts();
@@ -31,6 +32,11 @@ export default function AlertCenterPage() {
   const criticalCount = alertsList.filter(a => a.tag === "Critical").length;
   const warningCount = alertsList.filter(a => a.tag === "Warning").length;
   
+  // Filter alerts based on active filter
+  const filteredAlerts = activeFilter === "All" 
+    ? alertsList 
+    : alertsList.filter(a => a.tag === activeFilter);
+  
   const summaryCards = [
     {
       title: "Critical Alerts",
@@ -47,14 +53,6 @@ export default function AlertCenterPage() {
       bg: "bg-yellow-500/10",
       border: "border-yellow-500/20",
       countColor: "text-yellow-500"
-    },
-    {
-      title: "Opportunities",
-      count: 0,
-      icon: "/icons/overview/recentAlerts/trend-up.svg", 
-      bg: "bg-green-500/10",
-      border: "border-green-500/20",
-      countColor: "text-green-500"
     }
   ];
 
@@ -105,7 +103,7 @@ export default function AlertCenterPage() {
       </div>
 
       {/* 3. SUMMARY CARDS ROW */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {summaryCards.map((card) => (
           <div 
             key={card.title} 
@@ -129,27 +127,45 @@ export default function AlertCenterPage() {
         <h2 className="text-base font-semibold text-white mb-6">All Alerts</h2>
 
         <div className="flex items-center gap-3 mb-6">
-          <button className="px-4 py-1.5 rounded-full text-xs font-medium bg-white/10 text-white border border-white/10">
+          <button 
+            onClick={() => setActiveFilter("All")}
+            className={`px-4 py-1.5 rounded-full text-xs font-medium transition ${
+              activeFilter === "All" 
+                ? "bg-white/10 text-white border border-white/10" 
+                : "text-gray-500 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10"
+            }`}
+          >
             All ({alertsList.length})
           </button>
-          <button className="px-4 py-1.5 rounded-full text-xs font-medium text-gray-500 hover:text-white hover:bg-white/5 transition border border-transparent hover:border-white/10">
+          <button 
+            onClick={() => setActiveFilter("Critical")}
+            className={`px-4 py-1.5 rounded-full text-xs font-medium transition ${
+              activeFilter === "Critical" 
+                ? "bg-white/10 text-white border border-white/10" 
+                : "text-gray-500 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10"
+            }`}
+          >
             Critical ({criticalCount})
           </button>
-          <button className="px-4 py-1.5 rounded-full text-xs font-medium text-gray-500 hover:text-white hover:bg-white/5 transition border border-transparent hover:border-white/10">
+          <button 
+            onClick={() => setActiveFilter("Warning")}
+            className={`px-4 py-1.5 rounded-full text-xs font-medium transition ${
+              activeFilter === "Warning" 
+                ? "bg-white/10 text-white border border-white/10" 
+                : "text-gray-500 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10"
+            }`}
+          >
             Warning ({warningCount})
-          </button>
-          <button className="px-4 py-1.5 rounded-full text-xs font-medium text-gray-500 hover:text-white hover:bg-white/5 transition border border-transparent hover:border-white/10">
-            Opportunity (0)
           </button>
         </div>
 
         <div className="space-y-4">
-          {alertsList.length === 0 ? (
+          {filteredAlerts.length === 0 ? (
             <div className="py-12 text-center text-white/40">
-              No alerts at this time
+              {activeFilter === "All" ? "No alerts at this time" : `No ${activeFilter.toLowerCase()} alerts at this time`}
             </div>
           ) : (
-            alertsList.map((alert) => (
+            filteredAlerts.map((alert) => (
               <div 
                 key={alert.id} 
                 className="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:bg-white/[0.04] transition"

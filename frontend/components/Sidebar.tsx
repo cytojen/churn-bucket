@@ -99,44 +99,20 @@ export default function Sidebar() {
         </div>
 
         <a
-          href="/contracts"
-          className="flex items-center gap-3 px-3 py-2 rounded-md
-                     text-white/60 hover:text-white hover:bg-white/5 transition"
-        >
-          <img src="/icons/sideBar/contracts.svg" className="w-5.5 h-5.5 opacity-60" />
-          Contracts
-        </a>
-
-        <a
-          href="/analytics"
-          className="flex items-center gap-3 px-3 py-2 rounded-md
-                     text-white/60 hover:text-white hover:bg-white/5 transition"
+          href="/batch-scoring"
+          className={`flex items-center gap-3 px-3 py-2 rounded-md transition ${
+            pathname === "/batch-scoring"
+              ? "text-emerald-400 font-medium bg-white/5"
+              : "text-white/60 hover:text-white hover:bg-white/5"
+          }`}
         >
           <img src="/icons/sideBar/analytics.svg" className="w-5.5 h-5.5 opacity-60" />
-          Analytics
-        </a>
-
-        <a
-          href="/notifications"
-          className="flex items-center gap-3 px-3 py-2 rounded-md
-                     text-white/60 hover:text-white hover:bg-white/5 transition"
-        >
-          <img src="/icons/sideBar/notification.svg" className="w-5.5 h-5.5 opacity-60" />
-          Notification
+          Batch Scoring
         </a>
 
         <div className="my-4">
           <img src="/icons/sideBar/divider.svg" alt="divider" className="w-full opacity-80" />
         </div>
-
-        <a
-          href="/settings"
-          className="flex items-center gap-3 px-3 py-2 rounded-md
-                     text-white/40 hover:text-white hover:bg-white/5 transition"
-        >
-          <img src="/icons/sideBar/settings.svg" className="w-5.5 h-5.5 opacity-60" />
-          Settings
-        </a>
 
         <a
           href="/"
